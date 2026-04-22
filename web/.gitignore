@@ -1,0 +1,13 @@
+# Node / Vite
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# Env local
+.env
+.env.*.local
+
+# Logs / cachés
+*.log
+.cache/
