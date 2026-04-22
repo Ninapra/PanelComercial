@@ -34,13 +34,23 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     os.makedirs(app.instance_path, exist_ok=True)
 
+    # Cookie de sesion — configurable via env para soportar escenarios:
+    #   - Dev localhost HTTP (Chrome trata localhost como secure): None + Secure=True
+    #   - Same-origin simple: Lax + Secure=False
+    #   - Produccion HTTPS cross-subdomain: None + Secure=True
+    # Los defaults eligen None+Secure porque la arquitectura usual del panel
+    # es frontend (web/) y backend (api/) en origenes distintos.
+    cookie_samesite = os.environ.get('SESSION_COOKIE_SAMESITE', 'None')
+    cookie_secure = os.environ.get('SESSION_COOKIE_SECURE', 'true').lower() in ('1', 'true', 'yes', 'on')
+
     app.config.update(
         SECRET_KEY=_require_env('SECRET_KEY'),
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'renovaciones.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         PERMANENT_SESSION_LIFETIME=timedelta(hours=8),
         SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SAMESITE='Lax',
+        SESSION_COOKIE_SAMESITE=cookie_samesite,
+        SESSION_COOKIE_SECURE=cookie_secure,
         MAX_CONTENT_LENGTH=16 * 1024 * 1024,
         UPLOAD_FOLDER=os.path.join(os.path.dirname(app.instance_path), 'uploads'),
         LOG_FOLDER=os.path.join(os.path.dirname(app.instance_path), 'logs'),

@@ -84,10 +84,17 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px;}
 .pag a,.pag span{padding:5px 11px;border-radius:5px;font-size:13px;text-decoration:none;border:1px solid var(--brd);color:var(--txt);}
 .pag a:hover{background:var(--azul);color:#fff;border-color:var(--azul);}
 .pag .cur{background:var(--azul);color:#fff;border-color:var(--azul);}
+/* Modo embed — se activa con ?embed=1 cuando el backend se renderiza dentro
+   del iframe del panel master. Oculta el sidebar y la topbar para que la
+   navegacion visible sea la del panel master (consistencia visual). */
+body.embed .sb{display:none;}
+body.embed .main{margin-left:0;}
+body.embed .topbar{display:none;}
+body.embed .content{padding:18px 22px;}
 </style>
 {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% if request.args.get('embed') %}embed{% endif %}">
 <aside class="sb">
   <div class="sb-logo">
     <div class="sb-logo-box">
