@@ -1,10 +1,12 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, abort
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash
 from datetime import datetime, date, timedelta
 from sqlalchemy import func
-from app.models import Notificacion, ArchivoExcel, LogSistema, ConfigSMTP
+from app.models import User, Notificacion, ArchivoExcel, LogSistema, ConfigSMTP
 from app import db
+from functools import wraps
 import os, json
 
 main_bp = Blueprint('main', __name__)
@@ -13,6 +15,18 @@ def _log(nivel, msg, mod='sistema'):
     u = current_user.username if current_user.is_authenticated else 'sistema'
     db.session.add(LogSistema(nivel=nivel, mensaje=msg, modulo=mod, usuario=u, ip=request.remote_addr))
     db.session.commit()
+
+
+def _admin_required(view):
+    """Decorador — exige rol admin además de login."""
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for('auth.login'))
+        if (current_user.rol or '').lower() != 'admin':
+            abort(403)
+        return view(*args, **kwargs)
+    return wrapper
 
 @main_bp.route('/')
 @login_required
@@ -125,3 +139,93 @@ def configuracion():
         flash('Configuracion guardada.', 'success')
         return redirect(url_for('main.configuracion'))
     return render_template('configuracion.html', cfg=cfg, now=datetime.now())
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Gestión de usuarios — admin only
+# ──────────────────────────────────────────────────────────────────────────
+
+@main_bp.route('/usuarios', methods=['GET', 'POST'])
+@_admin_required
+def usuarios():
+    if request.method == 'POST':
+        email = (request.form.get('email') or '').strip().lower()
+        nombre = (request.form.get('nombre') or '').strip()
+        rol = (request.form.get('rol') or 'operador').strip().lower()
+        password = request.form.get('password') or ''
+        if not email or not password:
+            flash('Email y password son obligatorios.', 'error')
+            return redirect(url_for('main.usuarios'))
+        if len(password) < 8:
+            flash('El password debe tener al menos 8 caracteres.', 'error')
+            return redirect(url_for('main.usuarios'))
+        if User.query.filter(func.lower(User.email) == email).first():
+            flash('Ya existe un usuario con ese correo.', 'warning')
+            return redirect(url_for('main.usuarios'))
+        username = (email.split('@', 1)[0].replace('.', '_') or 'user')
+        # Si el username ya existe, sufijo numérico
+        base = username
+        i = 1
+        while User.query.filter_by(username=username).first():
+            i += 1
+            username = f"{base}{i}"
+        u = User(
+            username=username,
+            nombre=(nombre or email.split('@', 1)[0].title()),
+            email=email,
+            rol=(rol if rol in ('admin', 'agente', 'operador') else 'operador'),
+            password_hash=generate_password_hash(password),
+        )
+        db.session.add(u)
+        db.session.commit()
+        _log('INFO', f'Usuario creado: {email} (rol={rol})', 'usuarios')
+        flash(f'Usuario {email} creado correctamente.', 'success')
+        return redirect(url_for('main.usuarios'))
+
+    users = User.query.order_by(User.id.asc()).all()
+    return render_template('usuarios.html', users=users, now=datetime.now())
+
+
+@main_bp.route('/usuarios/<int:user_id>/toggle', methods=['POST'])
+@_admin_required
+def usuarios_toggle(user_id):
+    u = User.query.get_or_404(user_id)
+    if u.id == current_user.id:
+        flash('No puedes desactivar tu propia cuenta.', 'warning')
+        return redirect(url_for('main.usuarios'))
+    u.activo = not bool(u.activo)
+    db.session.commit()
+    estado = 'activado' if u.activo else 'desactivado'
+    _log('INFO', f'Usuario {u.email} {estado}', 'usuarios')
+    flash(f'Usuario {u.email} {estado}.', 'success')
+    return redirect(url_for('main.usuarios'))
+
+
+@main_bp.route('/usuarios/<int:user_id>/password', methods=['POST'])
+@_admin_required
+def usuarios_reset_password(user_id):
+    u = User.query.get_or_404(user_id)
+    new_password = request.form.get('password') or ''
+    if len(new_password) < 8:
+        flash('El password debe tener al menos 8 caracteres.', 'error')
+        return redirect(url_for('main.usuarios'))
+    u.password_hash = generate_password_hash(new_password)
+    db.session.commit()
+    _log('WARNING', f'Password de {u.email} reseteado por {current_user.email}', 'usuarios')
+    flash(f'Password de {u.email} actualizado.', 'success')
+    return redirect(url_for('main.usuarios'))
+
+
+@main_bp.route('/usuarios/<int:user_id>/eliminar', methods=['POST'])
+@_admin_required
+def usuarios_eliminar(user_id):
+    u = User.query.get_or_404(user_id)
+    if u.id == current_user.id:
+        flash('No puedes eliminar tu propia cuenta.', 'warning')
+        return redirect(url_for('main.usuarios'))
+    email = u.email
+    db.session.delete(u)
+    db.session.commit()
+    _log('WARNING', f'Usuario {email} eliminado por {current_user.email}', 'usuarios')
+    flash(f'Usuario {email} eliminado.', 'success')
+    return redirect(url_for('main.usuarios'))

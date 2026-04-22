@@ -107,6 +107,9 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px;}
     <div class="sb-sec">Sistema</div>
     <a href="{{ url_for('main.logs') }}"           class="sb-lnk {% if request.endpoint=='main.logs' %}on{% endif %}"><span class="ic">📋</span> Logs</a>
     <a href="{{ url_for('main.configuracion') }}"  class="sb-lnk {% if request.endpoint=='main.configuracion' %}on{% endif %}"><span class="ic">⚙️</span> Configuracion</a>
+    {% if (current_user.rol or '')|lower == 'admin' %}
+    <a href="{{ url_for('main.usuarios') }}"       class="sb-lnk {% if request.endpoint and request.endpoint.startswith('main.usuarios') %}on{% endif %}"><span class="ic">👥</span> Usuarios</a>
+    {% endif %}
     <a href="{{ url_for('auth.cambiar_password') }}" class="sb-lnk"><span class="ic">🔑</span> Cambiar Clave</a>
   </nav>
   <div class="sb-foot">

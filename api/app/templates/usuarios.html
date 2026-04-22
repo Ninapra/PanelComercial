@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Usuarios — Panel MI.COM.CO{% endblock %}
+{% block page_title %}Gestión de usuarios{% endblock %}
+
+{% block content %}
+<div class="panel" style="margin-bottom:22px;">
+  <div class="panel-hdr">
+    <h3>➕ Crear nuevo usuario</h3>
+    <span style="font-size:11px;color:var(--muted);">Solo administradores</span>
+  </div>
+  <form method="POST" action="{{ url_for('main.usuarios') }}" style="padding:18px;">
+    <div class="grid2">
+      <div class="form-g">
+        <label for="u-email">Correo electrónico</label>
+        <input type="email" id="u-email" name="email" required autocomplete="off" placeholder="usuario@example.com">
+      </div>
+      <div class="form-g">
+        <label for="u-nombre">Nombre visible</label>
+        <input type="text" id="u-nombre" name="nombre" placeholder="Nombre Apellido" autocomplete="off">
+        <div class="form-hint">Si lo dejas vacío se deriva del correo.</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="form-g">
+        <label for="u-password">Password inicial</label>
+        <input type="password" id="u-password" name="password" required minlength="8" autocomplete="new-password" placeholder="mínimo 8 caracteres">
+        <div class="form-hint">
+          <a href="#" onclick="event.preventDefault();document.getElementById('u-password').value=_gen();document.getElementById('u-password').type='text';">
+            Generar automáticamente
+          </a>
+        </div>
+      </div>
+      <div class="form-g">
+        <label for="u-rol">Rol</label>
+        <select id="u-rol" name="rol">
+          <option value="operador">Operador — acceso básico</option>
+          <option value="agente">Agente — ventas / renovaciones</option>
+          <option value="admin">Admin — control total (incluye gestión de usuarios)</option>
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Crear usuario</button>
+  </form>
+</div>
+
+<div class="panel">
+  <div class="panel-hdr">
+    <h3>👥 Usuarios registrados ({{ users|length }})</h3>
+  </div>
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Correo</th>
+        <th>Nombre</th>
+        <th>Rol</th>
+        <th>Estado</th>
+        <th>Último ingreso</th>
+        <th style="text-align:right;">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.id }}</td>
+        <td><strong>{{ u.email or '—' }}</strong></td>
+        <td>{{ u.nombre or u.username }}</td>
+        <td>
+          {% if u.rol == 'admin' %}<span class="badge b-red">admin</span>
+          {% elif u.rol == 'agente' %}<span class="badge b-orange">agente</span>
+          {% else %}<span class="badge b-blue">operador</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if u.activo %}<span class="badge b-green">activo</span>
+          {% else %}<span class="badge b-gray">inactivo</span>
+          {% endif %}
+        </td>
+        <td>{{ u.ultimo_login.strftime('%d/%m/%Y %H:%M') if u.ultimo_login else '—' }}</td>
+        <td style="text-align:right;white-space:nowrap;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="_resetPwd({{ u.id }}, '{{ u.email|e }}')">🔑 Password</button>
+          <form method="POST" action="{{ url_for('main.usuarios_toggle', user_id=u.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-outline btn-sm" {% if u.id == current_user.id %}disabled title="No puedes desactivarte a ti mismo"{% endif %}>
+              {% if u.activo %}⏸ Desactivar{% else %}▶ Activar{% endif %}
+            </button>
+          </form>
+          <form method="POST" action="{{ url_for('main.usuarios_eliminar', user_id=u.id) }}" style="display:inline;"
+                onsubmit="return confirm('¿Eliminar definitivamente a {{ u.email|e }}?');">
+            <button type="submit" class="btn btn-danger btn-sm" {% if u.id == current_user.id %}disabled{% endif %}>🗑 Eliminar</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted);">Sin usuarios registrados.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal reset password -->
+<div id="pwd-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.55);align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:10px;min-width:360px;max-width:90%;padding:22px;box-shadow:var(--sh);">
+    <h3 style="margin-bottom:14px;font-size:15px;">Resetear password</h3>
+    <form id="pwd-form" method="POST">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;">Usuario: <strong id="pwd-target"></strong></div>
+      <div class="form-g">
+        <label>Nuevo password</label>
+        <input type="text" id="pwd-input" name="password" required minlength="8" autocomplete="new-password">
+        <div class="form-hint">
+          <a href="#" onclick="event.preventDefault();document.getElementById('pwd-input').value=_gen();">Generar automáticamente</a>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('pwd-modal').style.display='none';">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function _gen() {
+  // Password aleatorio, 16 chars, letras+numeros+simbolos suaves.
+  var alpha = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  var extra = '!@#$%-_';
+  var s = '';
+  for (var i = 0; i < 14; i++) s += alpha.charAt(Math.floor(Math.random() * alpha.length));
+  s += extra.charAt(Math.floor(Math.random() * extra.length));
+  s += alpha.charAt(Math.floor(Math.random() * alpha.length));
+  return s;
+}
+function _resetPwd(userId, email) {
+  var modal = document.getElementById('pwd-modal');
+  document.getElementById('pwd-form').action = '/usuarios/' + userId + '/password';
+  document.getElementById('pwd-target').textContent = email;
+  document.getElementById('pwd-input').value = _gen();
+  modal.style.display = 'flex';
+}
+</script>
+{% endblock %}
