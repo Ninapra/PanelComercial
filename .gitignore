@@ -212,3 +212,10 @@ docker-compose.override.yaml
 # claude-guardrails — respaldos generados por bootstrap.py
 # -----------------------------------------------------------------------------
 .guardrails-backup/
+
+
+# -----------------------------------------------------------------------------
+# Auth local (credenciales client-side para desarrollo, nunca commitear)
+# -----------------------------------------------------------------------------
+config/auth.local.js
+config/*.local.js
