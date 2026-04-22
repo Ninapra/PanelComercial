@@ -1,0 +1,327 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <title>Renovación de servicio — {{DOMINIO}}</title>
+  <!--[if mso]>
+  <noscript><xml><o:OfficeDocumentSettings>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+  </o:OfficeDocumentSettings></xml></noscript>
+  <![endif]-->
+  <style type="text/css">
+    body, #bodyTable { margin:0 !important; padding:0 !important; width:100% !important; }
+    body { background-color:#f0f4f8 !important; }
+    table { border-collapse:collapse !important; mso-table-lspace:0pt !important; mso-table-rspace:0pt !important; }
+    img { border:0; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; display:block; }
+    a { text-decoration:none; }
+    @media only screen and (max-width:640px) {
+      .card { width:100% !important; border-radius:0 !important; }
+      .pad-main { padding:18px 16px !important; }
+      .pad-header { padding:16px 16px 20px !important; }
+      .pad-band { padding:12px 16px !important; }
+      .pad-footer { padding:12px 16px !important; }
+      .dias-num { font-size:36px !important; }
+      .btn-link { display:block !important; width:auto !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f4f8;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+
+<table id="bodyTable" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f0f4f8">
+  <tr>
+    <td align="center" valign="top" style="padding:24px 12px;">
+
+      <!-- ═══════════════════════════════════════
+           TARJETA PRINCIPAL (max 600px)
+      ═══════════════════════════════════════ -->
+      <table class="card" role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+             style="background-color:#ffffff;border-radius:10px;overflow:hidden;">
+        <!--[if mso]><tr><td><table width="600" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
+
+
+        <!-- ───────────────────────────────────
+             HEADER: fondo color según urgencia
+        ─────────────────────────────────────── -->
+        <tr>
+          <td bgcolor="{{COLOR_INICIO}}" style="background-color:{{COLOR_INICIO}};padding:0;">
+
+            <!-- Barra superior: logo + badge -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding:16px 24px 12px;border-bottom:1px solid rgba(255,255,255,0.20);">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <!-- Bloque logo -->
+                      <td valign="middle" width="120">
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                          <tr>
+                            <!-- Cuadro MI -->
+                            <td width="36" height="36" align="center" valign="middle"
+                                bgcolor="#FF6D00"
+                                style="background-color:#FF6D00;border-radius:7px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;line-height:36px;text-align:center;">
+                              MI
+                            </td>
+                            <!-- Texto marca -->
+                            <td valign="middle" style="padding-left:8px;">
+                              <span style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#ffffff;">MI.COM.CO</span>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                      <!-- Badge alerta -->
+                      <td align="right" valign="middle">
+                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="right">
+                          <tr>
+                            <td bgcolor="#FF6D00"
+                                style="background-color:#FF6D00;border-radius:20px;padding:4px 14px;">
+                              <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#ffffff;text-transform:uppercase;letter-spacing:0.8px;">
+                                Alerta {{NUMERO_ALERTA}}/{{TOTAL_ALERTAS}}
+                              </span>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Título principal -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td class="pad-header" style="padding:20px 24px 26px;">
+                  <p style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:21px;font-weight:bold;color:#ffffff;line-height:1.3;">
+                    Vence en {{DIAS_RESTANTES}} días — PRÓXIMO
+                  </p>
+                  <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:rgba(255,255,255,0.82);line-height:1.5;">
+                    Recordatorio de renovación de servicio
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+
+        <!-- ───────────────────────────────────
+             BANDA NARANJA: días restantes
+        ─────────────────────────────────────── -->
+        <tr>
+          <td bgcolor="#FF6D00" style="background-color:#FF6D00;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td class="pad-band" style="padding:14px 24px;">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <!-- Número grande -->
+                      <td valign="middle">
+                        <span class="dias-num"
+                              style="font-family:Arial,Helvetica,sans-serif;font-size:44px;font-weight:bold;color:#ffffff;line-height:1;display:block;">
+                          {{DIAS_RESTANTES}}
+                        </span>
+                      </td>
+                      <!-- Etiqueta al lado -->
+                      <td valign="middle" style="padding-left:14px;">
+                        <p style="margin:0 0 3px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#ffffff;line-height:1.3;">
+                          días para el vencimiento
+                        </p>
+                        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:rgba(255,255,255,0.90);line-height:1.4;">
+                          Fecha límite: {{FECHA_VENCIMIENTO}}
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- Etiqueta notificación N de N -->
+        <tr>
+          <td bgcolor="#f7f9fc" style="background-color:#f7f9fc;padding:6px 24px;border-bottom:1px solid #e8edf4;">
+            <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#b0b8c8;text-align:right;">
+              Notificación {{NUMERO_ALERTA}} de {{TOTAL_ALERTAS}} &nbsp;&middot;&nbsp; {{FECHA_ENVIO}}
+            </p>
+          </td>
+        </tr>
+
+        <!-- ───────────────────────────────────
+             CUERPO: texto + detalle + botón
+        ─────────────────────────────────────── -->
+        <tr>
+          <td class="pad-main" style="padding:24px 24px 20px;background-color:#ffffff;">
+
+            <!-- Saludo con borde izquierdo -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="3" bgcolor="{{COLOR_INICIO}}" style="background-color:{{COLOR_INICIO}};border-radius:3px;">&nbsp;</td>
+                <td style="padding-left:14px;">
+                  <p style="margin:0 0 5px 0;font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:bold;color:#0d47a1;line-height:1.3;">
+                    ¡Hola!
+                  </p>
+                  <p style="margin:0 0 9px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#333333;line-height:1.7;">
+                    Espero que estés teniendo un excelente día.
+                  </p>
+                  <p style="margin:0 0 9px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#333333;line-height:1.7;">
+                    Te escribo para recordarte que tu servicio de <strong>{{SERVICIO}}</strong> para
+                    <a href="{{URL_RENOVACION}}" style="color:#0d47a1;font-weight:bold;text-decoration:none;">{{DOMINIO}}</a>
+                    vence el <strong>{{FECHA_VENCIMIENTO}}</strong>.
+                  </p>
+                  <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#333333;line-height:1.7;">
+                    Si tienes alguna duda sobre la renovación o necesitas ayuda con el proceso,
+                    estaré encantada de apoyarte. Te dejo a continuación el enlace directo para
+                    que puedas hacer el pago fácilmente:
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Espaciado -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="20" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></table>
+
+            <!-- ─── DETALLE DEL SERVICIO (tabla con celdas) ─── -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                   style="border:1.5px solid #e3eaf4;border-radius:8px;">
+
+              <!-- Cabecera azul -->
+              <tr>
+                <td colspan="2" bgcolor="#0d47a1"
+                    style="background-color:#0d47a1;padding:9px 16px;border-radius:6px 6px 0 0;">
+                  <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;color:#ffffff;text-transform:uppercase;letter-spacing:1.2px;">
+                    Detalle del servicio
+                  </span>
+                </td>
+              </tr>
+
+              <!-- Fila dominio -->
+              <tr>
+                <td bgcolor="#ffffff" style="background-color:#ffffff;padding:11px 16px;border-bottom:1px solid #f0f4f8;width:28px;vertical-align:top;">
+                  <span style="font-size:17px;line-height:1;">🌐</span>
+                </td>
+                <td bgcolor="#ffffff" style="background-color:#ffffff;padding:11px 16px 11px 0;border-bottom:1px solid #f0f4f8;vertical-align:top;">
+                  <span style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#999999;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:3px;">Dominio</span>
+                  <span style="font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#0d47a1;">{{DOMINIO}}</span>
+                </td>
+              </tr>
+
+              <!-- Fila servicio -->
+              <tr>
+                <td bgcolor="#f7f9fc" style="background-color:#f7f9fc;padding:11px 16px;border-bottom:1px solid #f0f4f8;vertical-align:top;">
+                  <span style="font-size:17px;line-height:1;">⚙️</span>
+                </td>
+                <td bgcolor="#f7f9fc" style="background-color:#f7f9fc;padding:11px 16px 11px 0;border-bottom:1px solid #f0f4f8;vertical-align:top;">
+                  <span style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#999999;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:3px;">Servicio</span>
+                  <span style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#333333;">{{SERVICIO}}</span>
+                </td>
+              </tr>
+
+              <!-- Fila vencimiento -->
+              <tr>
+                <td bgcolor="#ffffff" style="background-color:#ffffff;padding:11px 16px;vertical-align:top;">
+                  <span style="font-size:17px;line-height:1;">📅</span>
+                </td>
+                <td bgcolor="#ffffff" style="background-color:#ffffff;padding:11px 16px 11px 0;vertical-align:top;">
+                  <span style="font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#999999;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:3px;">Fecha de vencimiento</span>
+                  <span style="font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#FF6D00;">{{FECHA_VENCIMIENTO}}</span>
+                </td>
+              </tr>
+
+            </table>
+            <!-- /detalle -->
+
+            <!-- Espaciado -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td height="22" style="font-size:1px;line-height:1px;">&nbsp;</td></tr></table>
+
+            <!-- ─── BOTÓN CTA ─── -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td align="center">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td bgcolor="#FF6D00" style="background-color:#FF6D00;border-radius:6px;text-align:center;mso-padding-alt:0;">
+                        <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="{{URL_RENOVACION}}" style="height:46px;v-text-anchor:middle;width:300px;" arcsize="13%" stroke="f" fillcolor="#FF6D00"><w:anchorlock/><center style="font-family:Arial,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;">Renovar ahora &mdash; {{DOMINIO}}</center></v:roundrect><![endif]-->
+                        <!--[if !mso]><!-->
+                        <a class="btn-link" href="{{URL_RENOVACION}}"
+                           style="display:inline-block;background-color:#FF6D00;border-radius:6px;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;line-height:1;padding:14px 32px;text-decoration:none;text-align:center;">
+                          Renovar ahora — {{DOMINIO}}
+                        </a>
+                        <!--<![endif]-->
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <!-- URL visible -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td align="center" style="padding-top:7px;">
+                  <a href="{{URL_RENOVACION}}" style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#aaaaaa;word-break:break-all;text-decoration:underline;">
+                    {{URL_RENOVACION}}
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Divisor -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr><td height="22" style="border-top:1px solid #eef2f7;font-size:1px;line-height:1px;">&nbsp;</td></tr>
+            </table>
+
+            <!-- ─── FIRMA ─── -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding-top:16px;">
+                  <p style="margin:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#555555;line-height:1.7;">
+                    Quedo atenta a cualquier cosa que necesites.
+                  </p>
+                  <p style="margin:0 0 2px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#0d47a1;line-height:1.3;">
+                    Isa Salazar
+                  </p>
+                  <p style="margin:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#777777;line-height:1.4;">
+                    Ejecutiva de Cuenta · Renovaciones
+                  </p>
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td bgcolor="#0d47a1" style="background-color:#0d47a1;border-radius:4px;padding:4px 11px;">
+                        <span style="font-family:Arial,Helvetica,sans-serif;font-size:12px;font-weight:bold;color:#ffffff;">MI.COM.CO</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+
+        <!-- ───────────────────────────────────
+             FOOTER
+        ─────────────────────────────────────── -->
+        <tr>
+          <td class="pad-footer" bgcolor="#f7f9fc"
+              style="background-color:#f7f9fc;border-top:1px solid #e3eaf4;padding:14px 24px;">
+            <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#b0b8c8;text-align:center;line-height:1.7;">
+              Mensaje automático generado por el sistema de renovaciones de MI.COM.CO.<br />
+              Por favor, no responda directamente — contáctenos por nuestros canales oficiales.<br />
+              &copy; {{ANIO}} MI.COM.CO. Todos los derechos reservados.
+            </p>
+          </td>
+        </tr>
+
+        <!--[if mso]></td></tr></table></td></tr></table><![endif]-->
+
+      </table>
+      <!-- /tarjeta -->
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

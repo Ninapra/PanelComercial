@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Reportes{% endblock %}
+{% block page_title %}Reportes de Notificaciones{% endblock %}
+{% block content %}
+<div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;">
+  <a href="?rango=semanal"   class="btn {{ 'btn-primary' if rango=='semanal'   else 'btn-outline' }}">Semanal (7 dias)</a>
+  <a href="?rango=quincenal" class="btn {{ 'btn-primary' if rango=='quincenal' else 'btn-outline' }}">Quincenal (15 dias)</a>
+  <a href="?rango=mensual"   class="btn {{ 'btn-primary' if rango=='mensual'   else 'btn-outline' }}">Mensual (30 dias)</a>
+  <button onclick="exportarCSV()" class="btn btn-outline" style="margin-left:auto;">Exportar CSV</button>
+  <button onclick="window.print()" class="btn btn-outline">Imprimir</button>
+</div>
+
+<div class="cards" style="grid-template-columns:repeat(4,1fr);">
+  <div class="card c-blue"><div class="card-val">{{ rows|length }}</div><div class="card-lbl">Total enviados</div></div>
+  <div class="card c-orange"><div class="card-val">{{ prox|length }}</div><div class="card-lbl">Proximos a vencer</div></div>
+  <div class="card c-red"><div class="card-val">{{ venc|length }}</div><div class="card-lbl">Vencidos notificados</div></div>
+  <div class="card c-green">
+    <div class="card-val">{{ rows|selectattr('tipo_envio','equalto','agrupado')|list|length }}</div>
+    <div class="card-lbl">Correos agrupados</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
+  <div class="panel">
+    <div class="panel-hdr"><h3>{{ titulo }} — {{ inicio }} al {{ fin }}</h3></div>
+    <div style="padding:16px;"><canvas id="chartR" height="120"></canvas></div>
+  </div>
+  <div class="panel">
+    <div class="panel-hdr"><h3>Distribucion por tipo</h3></div>
+    <div style="padding:16px;"><canvas id="chartPie" height="120"></canvas></div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-hdr"><h3>Detalle de envios — {{ titulo }}</h3></div>
+  <table class="tbl" id="tabla-reporte">
+    <thead><tr>
+      <th>Dominio</th><th>Servicio(s)</th><th>Tipo</th>
+      <th>Vencimiento</th><th>Correo</th><th>Fecha envio</th>
+      <th>No. alerta</th><th>Tipo envio</th>
+    </tr></thead>
+    <tbody>
+    {% for n in rows %}
+    <tr>
+      <td><strong>{{ n.dominio }}</strong></td>
+      <td style="font-size:12px;max-width:160px;">{{ n.servicios }}</td>
+      <td>{% if n.tipo_alerta=='proximo' %}<span class="badge b-blue">Proximo</span>{% else %}<span class="badge b-red">Vencido</span>{% endif %}</td>
+      <td>{{ n.fecha_vencimiento.strftime('%d/%m/%Y') if n.fecha_vencimiento else '—' }}</td>
+      <td style="font-size:12px;">{{ n.correo_destino }}</td>
+      <td style="font-size:12px;">{{ n.fecha_envio.strftime('%d/%m/%Y %H:%M') if n.fecha_envio else '—' }}</td>
+      <td style="text-align:center;">{{ n.numero_alerta }}</td>
+      <td>{% if n.tipo_envio=='agrupado' %}<span class="badge b-purple">Agrupado</span>{% else %}<span class="badge b-gray">Individual</span>{% endif %}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px;">Sin datos para este periodo</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const labelsR = {{ labels|tojson }};
+const datosR  = {{ datos|tojson }};
+new Chart(document.getElementById('chartR'),{
+  type:'bar',data:{labels:labelsR,datasets:[{label:'Enviados',data:datosR,backgroundColor:'rgba(13,71,161,.7)',borderRadius:4}]},
+  options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}
+});
+new Chart(document.getElementById('chartPie'),{
+  type:'doughnut',
+  data:{labels:['Proximos','Vencidos'],datasets:[{data:[{{ prox|length }},{{ venc|length }}],backgroundColor:['#1565c0','#b71c1c']}]},
+  options:{responsive:true,plugins:{legend:{position:'bottom'}}}
+});
+
+function exportarCSV() {
+  const filas = [['Dominio','Servicios','Tipo','Vencimiento','Correo','Fecha Envio','N.Alerta','Tipo Envio']];
+  document.querySelectorAll('#tabla-reporte tbody tr').forEach(tr=>{
+    const celdas = [...tr.querySelectorAll('td')].map(td=>td.textContent.trim().replace(/\n/g,' '));
+    if(celdas.length > 1) filas.push(celdas);
+  });
+  const csv = filas.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `reporte_{{ rango }}_{{ fin.replace('/','') }}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+</script>
+{% endblock %}

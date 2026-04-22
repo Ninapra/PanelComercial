@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MI.COM.CO — Iniciar Sesion</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:linear-gradient(135deg,#0d47a1 0%,#1565c0 60%,#0d3380 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.card{background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.28);width:100%;max-width:400px;overflow:hidden;}
+.hdr{background:linear-gradient(135deg,#0d47a1,#1976d2);padding:30px 32px 26px;text-align:center;}
+.logo{width:54px;height:54px;background:#FF6D00;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;margin:0 auto 14px;}
+.hdr h1{color:#fff;font-size:20px;font-weight:800;}
+.hdr p{color:rgba(255,255,255,.7);font-size:12px;margin-top:4px;}
+.body{padding:28px 32px 24px;}
+.alert{padding:10px 14px;border-radius:7px;font-size:13px;margin-bottom:14px;}
+.alert-error{background:#ffebee;color:#c62828;border:1px solid #ffcdd2;}
+label{display:block;font-size:13px;font-weight:600;color:#333;margin-bottom:5px;}
+input{width:100%;padding:11px 13px;border:1.5px solid #e3eaf4;border-radius:7px;font-size:14px;font-family:inherit;transition:.15s;margin-bottom:14px;}
+input:focus{outline:none;border-color:#1976d2;box-shadow:0 0 0 3px rgba(25,118,210,.12);}
+.btn{width:100%;padding:12px;background:linear-gradient(135deg,#0d47a1,#1976d2);color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s;}
+.btn:hover{opacity:.9;}
+.note{margin-top:14px;background:#f0f4ff;border-radius:7px;padding:10px;font-size:11px;color:#1565c0;text-align:center;}
+.footer{padding:14px 32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #f0f4f8;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="hdr">
+    <div class="logo">MI</div>
+    <h1>Panel de Renovaciones</h1>
+    <p>MI.COM.CO &mdash; Sistema de Notificaciones</p>
+  </div>
+  <div class="body">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ 'error' if cat=='error' else 'info' }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form method="POST">
+      <label>Usuario</label>
+      <input type="text" name="username" placeholder="Tu usuario" required autofocus maxlength="80">
+      <label>Contrasena</label>
+      <input type="password" name="password" placeholder="••••••••" required maxlength="128">
+      <button type="submit" class="btn">Iniciar Sesion</button>
+    </form>
+    <div class="note">Protegido con bloqueo tras 5 intentos fallidos</div>
+  </div>
+  <div class="footer">&copy; 2024 MI.COM.CO &mdash; Todos los derechos reservados</div>
+</div>
+</body></html>

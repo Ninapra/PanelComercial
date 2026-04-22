@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Configuracion{% endblock %}
+{% block page_title %}Configuracion del Sistema{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+  <div class="panel">
+    <div class="panel-hdr"><h3>Servidor de Correo (SMTP/IMAP)</h3></div>
+    <div style="padding:20px;">
+      <form method="POST">
+        <div class="form-g"><label>Servidor SMTP</label>
+          <input type="text" name="host_smtp" value="{{ cfg.host_smtp or 'smtp.mi.com.co' }}" required>
+        </div>
+        <div class="grid2">
+          <div class="form-g"><label>Puerto SMTP</label>
+            <input type="number" name="port_smtp" value="{{ cfg.port_smtp or 465 }}">
+          </div>
+          <div class="form-g"><label>Cifrado</label>
+            <select name="cifrado">
+              <option value="ssl"      {{ 'selected' if cfg.cifrado=='ssl' }}>SSL (puerto 465)</option>
+              <option value="starttls" {{ 'selected' if cfg.cifrado=='starttls' }}>STARTTLS (puerto 587)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-g"><label>Servidor IMAP</label>
+          <input type="text" name="host_imap" value="{{ cfg.host_imap or 'imap-alt02.mi.com.co' }}">
+        </div>
+        <div class="form-g"><label>Puerto IMAP</label>
+          <input type="number" name="port_imap" value="{{ cfg.port_imap or 993 }}">
+        </div>
+        <hr style="border:none;border-top:1px solid var(--brd);margin:14px 0;">
+        <div class="form-g"><label>Usuario (correo)</label>
+          <input type="email" name="usuario" value="{{ cfg.usuario or '' }}" required>
+        </div>
+        <div class="form-g"><label>Contrasena <span style="color:var(--muted);font-weight:400;">(dejar en blanco para no cambiar)</span></label>
+          <input type="password" name="password" placeholder="••••••••">
+        </div>
+        <div class="form-g"><label>Nombre del remitente</label>
+          <input type="text" name="remitente" value="{{ cfg.remitente or '' }}" placeholder="Renovaciones <correo@example.com>">
+        </div>
+        <div class="form-g"><label>Correo destino (respaldo)</label>
+          <input type="email" name="email_destino" value="{{ cfg.email_destino or '' }}">
+          <div class="form-hint">Usado cuando el Excel no trae correo por fila</div>
+        </div>
+        <div class="form-g"><label>Correo reporte diario</label>
+          <input type="email" name="email_reporte" value="{{ cfg.email_reporte or '' }}" placeholder="correo-reporte@example.com">
+        </div>
+        <div class="form-g"><label>Limite diario de correos</label>
+          <input type="number" name="max_dia" value="{{ cfg.max_dia or 300 }}" min="1" max="5000">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:4px;">
+          <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">Guardar Configuracion</button>
+          <button type="button" class="btn btn-outline" onclick="testSMTP()">Probar conexion</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div>
+    <div class="panel" style="margin-bottom:18px;">
+      <div class="panel-hdr"><h3>Estado de la Conexion</h3></div>
+      <div style="padding:16px;" id="test-result">
+        <div style="text-align:center;color:var(--muted);padding:20px;font-size:13px;">Haz clic en "Probar conexion" para verificar</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-hdr"><h3>Agente IA</h3></div>
+      <div style="padding:16px;">
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px;">
+          El agente IA de Claude revisa y mejora automaticamente la redaccion de los correos antes de enviarlos.
+          Corrige ortografia, mejora el tono corporativo y optimiza el mensaje.
+        </div>
+        <div class="form-g"><label>Texto de prueba</label>
+          <textarea id="ia-texto" style="width:100%;padding:9px 12px;border:1.5px solid var(--brd);border-radius:7px;font-size:13px;font-family:inherit;height:100px;resize:vertical;" placeholder="Escribe un texto para que el agente IA lo mejore..."></textarea>
+        </div>
+        <button class="btn btn-orange" onclick="probarIA()" style="width:100%;justify-content:center;">Mejorar con IA</button>
+        <div id="ia-result" style="display:none;margin-top:12px;background:#f0f7ff;border-radius:7px;padding:12px;font-size:13px;line-height:1.6;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function testSMTP() {
+  document.getElementById('test-result').innerHTML = '<div style="text-align:center;padding:14px;"><div style="font-size:24px;margin-bottom:8px;">⏳</div><div style="font-size:13px;color:var(--muted);">Probando conexion...</div></div>';
+  fetch('/api/test-smtp', {method:'POST'}).then(r=>r.json()).then(d=>{
+    const ok = d.ok;
+    document.getElementById('test-result').innerHTML = `
+      <div style="text-align:center;padding:14px;">
+        <div style="font-size:32px;margin-bottom:8px;">${ok ? '✅' : '❌'}</div>
+        <div style="font-size:13px;color:${ok ? 'var(--verde)' : 'var(--rojo)'};">${d.msg}</div>
+      </div>`;
+  });
+}
+function probarIA() {
+  const texto = document.getElementById('ia-texto').value;
+  if(!texto.trim()) {alert('Escribe un texto primero.'); return;}
+  document.getElementById('ia-result').style.display='block';
+  document.getElementById('ia-result').innerHTML='<em>El agente IA esta procesando...</em>';
+  fetch('/api/ia/mejorar', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({texto,modo:'ortografia'})})
+    .then(r=>r.json()).then(d=>{
+      if(d.ok) document.getElementById('ia-result').innerHTML='<strong>Texto mejorado:</strong><br><br>'+d.texto;
+      else document.getElementById('ia-result').innerHTML='Error: '+d.msg;
+    });
+}
+</script>
+{% endblock %}

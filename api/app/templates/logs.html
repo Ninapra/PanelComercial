@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Logs{% endblock %}
+{% block page_title %}Logs del Sistema{% endblock %}
+{% block content %}
+<div class="panel">
+  <div class="panel-hdr" style="flex-wrap:wrap;gap:10px;">
+    <h3>Registro de Actividad</h3>
+    <form method="GET" style="display:flex;gap:8px;">
+      <select name="nivel" style="padding:6px 10px;border:1.5px solid var(--brd);border-radius:6px;font-size:13px;">
+        <option value="">Todos los niveles</option>
+        <option value="INFO"  {{ 'selected' if nivel=='INFO' }}>INFO</option>
+        <option value="WARN"  {{ 'selected' if nivel=='WARN' }}>WARN</option>
+        <option value="ERROR" {{ 'selected' if nivel=='ERROR' }}>ERROR</option>
+      </select>
+      <select name="modulo" style="padding:6px 10px;border:1.5px solid var(--brd);border-radius:6px;font-size:13px;">
+        <option value="">Todos los modulos</option>
+        <option value="auth"        {{ 'selected' if mod=='auth' }}>Auth</option>
+        <option value="notificador" {{ 'selected' if mod=='notificador' }}>Notificador</option>
+        <option value="excel"       {{ 'selected' if mod=='excel' }}>Excel</option>
+        <option value="config"      {{ 'selected' if mod=='config' }}>Config</option>
+      </select>
+      <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+      <a href="{{ url_for('main.logs') }}" class="btn btn-outline btn-sm">Limpiar</a>
+    </form>
+  </div>
+  <table class="tbl">
+    <thead><tr><th>Fecha/Hora</th><th>Nivel</th><th>Modulo</th><th>Usuario</th><th>IP</th><th>Mensaje</th></tr></thead>
+    <tbody>
+    {% for l in logs.items %}
+    <tr>
+      <td style="font-size:11px;white-space:nowrap;">{{ l.created_at.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+      <td>
+        {% if l.nivel=='ERROR' %}<span class="badge b-red">ERROR</span>
+        {% elif l.nivel=='WARN' %}<span class="badge b-orange">WARN</span>
+        {% else %}<span class="badge b-blue">INFO</span>{% endif %}
+      </td>
+      <td style="font-size:12px;">{{ l.modulo }}</td>
+      <td style="font-size:12px;">{{ l.usuario }}</td>
+      <td style="font-size:11px;color:var(--muted);">{{ l.ip }}</td>
+      <td style="font-size:12px;max-width:400px;">{{ l.mensaje }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;">Sin logs</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <div class="pag">
+    {% if logs.has_prev %}<a href="?page={{ logs.prev_num }}&nivel={{ nivel }}&modulo={{ mod }}">&laquo;</a>{% endif %}
+    <span class="cur">{{ logs.page }}</span>
+    {% if logs.has_next %}<a href="?page={{ logs.next_num }}&nivel={{ nivel }}&modulo={{ mod }}">&raquo;</a>{% endif %}
+    <span style="margin-left:auto;font-size:12px;color:var(--muted);">{{ logs.total }} entradas</span>
+  </div>
+</div>
+{% endblock %}
