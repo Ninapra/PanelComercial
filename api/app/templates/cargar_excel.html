@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Cargar Excel{% endblock %}
+{% block page_title %}Cargar Archivo Excel{% endblock %}
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+  <div class="panel">
+    <div class="panel-hdr"><h3>Subir nuevo archivo</h3></div>
+    <div style="padding:20px;">
+      <form method="POST" enctype="multipart/form-data" id="form-upload">
+        <div id="zona-drop" style="border:2px dashed var(--brd);border-radius:var(--r);padding:40px;text-align:center;cursor:pointer;transition:.2s;margin-bottom:16px;" onclick="document.getElementById('input-file').click()">
+          <div style="font-size:48px;margin-bottom:10px;">📊</div>
+          <div style="font-size:15px;font-weight:600;color:var(--txt);">Arrastra el archivo aqui</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:4px;">o haz clic para seleccionar</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:8px;">Solo archivos .xlsx — max 16 MB</div>
+          <div id="archivo-selec" style="margin-top:12px;display:none;">
+            <span class="badge b-green" id="nombre-archivo"></span>
+          </div>
+        </div>
+        <input type="file" id="input-file" name="archivo" accept=".xlsx,.xls" style="display:none;" onchange="mostrarNombre(this)">
+        <button type="submit" class="btn btn-orange" style="width:100%;justify-content:center;font-size:14px;padding:12px;" id="btn-subir" disabled>
+          Subir y Activar
+        </button>
+      </form>
+      <div style="margin-top:14px;background:#e3f2fd;border-radius:7px;padding:12px;font-size:12px;color:#1565c0;">
+        El archivo debe tener la hoja <strong>Vencimiento</strong> con las columnas: Dominio, Servicio, Vencimiento, Correo, Categoria.
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-hdr"><h3>Historial de archivos</h3></div>
+    <table class="tbl">
+      <thead><tr><th>Archivo</th><th>Filas</th><th>Subido</th><th>Estado</th></tr></thead>
+      <tbody>
+      {% for a in archivos %}
+      <tr>
+        <td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;">{{ a.nombre }}</td>
+        <td>{{ a.total_filas }}</td>
+        <td style="font-size:11px;">{{ a.subido_en.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td>{% if a.activo %}<span class="badge b-green">Activo</span>{% else %}<span class="badge b-gray">Inactivo</span>{% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">Sin archivos</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function mostrarNombre(input) {
+  if(input.files.length > 0) {
+    document.getElementById('nombre-archivo').textContent = input.files[0].name;
+    document.getElementById('archivo-selec').style.display='block';
+    document.getElementById('btn-subir').disabled = false;
+    document.getElementById('zona-drop').style.borderColor='var(--azul3)';
+    document.getElementById('zona-drop').style.background='#f0f7ff';
+  }
+}
+const zona = document.getElementById('zona-drop');
+zona.addEventListener('dragover', e=>{e.preventDefault();zona.style.borderColor='var(--naranja)';});
+zona.addEventListener('dragleave', ()=>{zona.style.borderColor='var(--brd)';});
+zona.addEventListener('drop', e=>{
+  e.preventDefault();
+  const input = document.getElementById('input-file');
+  input.files = e.dataTransfer.files;
+  mostrarNombre(input);
+});
+</script>
+{% endblock %}

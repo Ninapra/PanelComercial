@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — MI.COM.CO{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="cards">
+  <div class="card c-blue">
+    <div class="card-top"><div class="card-ic">📬</div></div>
+    <div class="card-val">{{ total }}</div>
+    <div class="card-lbl">Total enviados</div>
+  </div>
+  <div class="card c-orange">
+    <div class="card-top"><div class="card-ic">📅</div></div>
+    <div class="card-val">{{ hoy_cnt }}</div>
+    <div class="card-lbl">Enviados hoy (limite: {{ limite }})</div>
+    <div class="prog-bg" style="margin-top:8px;"><div class="prog-fill" style="width:{{ hoy_pct }}%;"></div></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;">{{ hoy_pct }}% del limite diario</div>
+  </div>
+  <div class="card c-orange">
+    <div class="card-top"><div class="card-ic">⏰</div></div>
+    <div class="card-val">{{ prox }}</div>
+    <div class="card-lbl">Proximos a vencer (30 dias)</div>
+  </div>
+  <div class="card c-red">
+    <div class="card-top"><div class="card-ic">🚨</div></div>
+    <div class="card-val">{{ venc }}</div>
+    <div class="card-lbl">Dominios vencidos activos</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 340px;gap:18px;margin-bottom:18px;">
+  <div class="panel">
+    <div class="panel-hdr"><h3>Envios por dia (ultimos 7 dias)</h3></div>
+    <div style="padding:18px;"><canvas id="chartDia" height="90"></canvas></div>
+  </div>
+  <div class="panel">
+    <div class="panel-hdr" style="justify-content:space-between;">
+      <h3>Archivo Excel activo</h3>
+    </div>
+    <div style="padding:18px;">
+      {% if excel_activo %}
+        <div style="background:#e8f5e9;border-radius:8px;padding:12px;margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:700;color:#2e7d32;">✅ {{ excel_activo.nombre }}</div>
+          <div style="font-size:12px;color:#555;margin-top:4px;">{{ excel_activo.total_filas }} registros &middot; Cargado {{ excel_activo.subido_en.strftime('%d/%m/%Y %H:%M') }}</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-direction:column;">
+          <button class="btn btn-orange" onclick="lanzarProceso()" id="btn-lanzar" style="width:100%;justify-content:center;font-size:14px;padding:11px;">
+            Lanzar Notificaciones
+          </button>
+          <button class="btn btn-danger" onclick="detenerProceso()" id="btn-detener" style="width:100%;justify-content:center;display:none;">
+            Detener Proceso
+          </button>
+        </div>
+      {% else %}
+        <div style="text-align:center;padding:20px;color:var(--muted);">
+          <div style="font-size:36px;margin-bottom:10px;">📁</div>
+          <div style="font-size:13px;">No hay archivo cargado</div>
+          <a href="{{ url_for('main.cargar_excel') }}" class="btn btn-primary" style="margin-top:12px;">Cargar Excel</a>
+        </div>
+      {% endif %}
+    </div>
+    <!-- Panel proceso -->
+    <div id="proceso-panel" style="display:none;padding:0 18px 18px;">
+      <div style="margin-bottom:8px;display:flex;justify-content:space-between;">
+        <span style="font-size:12px;font-weight:600;" id="proc-msg">Procesando...</span>
+        <span style="font-size:12px;color:var(--muted);" id="proc-cnt">0/0</span>
+      </div>
+      <div class="prog-bg"><div class="prog-fill" id="proc-bar" style="width:0%;"></div></div>
+      <div id="proc-log" style="background:#1a1a2e;border-radius:7px;padding:10px;height:160px;overflow-y:auto;font-family:'Courier New',monospace;font-size:11px;color:#a8d8a8;margin-top:10px;"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;font-size:12px;color:var(--muted);">
+        <span>Enviados: <strong id="proc-env" style="color:var(--verde);">0</strong></span>
+        <span>Errores: <strong id="proc-err" style="color:var(--rojo);">0</strong></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-hdr">
+    <h3>Ultimas notificaciones</h3>
+    <a href="{{ url_for('main.notificaciones') }}" class="btn btn-outline btn-sm">Ver todas</a>
+  </div>
+  <table class="tbl">
+    <thead><tr>
+      <th>Dominio</th><th>Servicio(s)</th><th>Tipo</th>
+      <th>Vencimiento</th><th>Correo</th><th>Enviado</th><th>Estado</th>
+    </tr></thead>
+    <tbody>
+    {% for n in ultimas %}
+    <tr>
+      <td><strong>{{ n.dominio }}</strong></td>
+      <td>{{ n.servicios[:40] }}{{ '...' if n.servicios and n.servicios|length > 40 else '' }}</td>
+      <td>
+        {% if n.tipo_alerta == 'proximo' %}<span class="badge b-blue">Proximo</span>
+        {% elif n.tipo_alerta == 'vencido' %}<span class="badge b-red">Vencido</span>
+        {% else %}<span class="badge b-gray">N/A</span>{% endif %}
+        {% if n.tipo_envio == 'agrupado' %}<span class="badge b-purple" style="margin-left:4px;">Agrupado</span>{% endif %}
+      </td>
+      <td>{{ n.fecha_vencimiento.strftime('%d/%m/%Y') if n.fecha_vencimiento else '—' }}</td>
+      <td style="font-size:12px;">{{ n.correo_destino }}</td>
+      <td style="font-size:12px;">{{ n.fecha_envio.strftime('%d/%m %H:%M') if n.fecha_envio else '—' }}</td>
+      <td>
+        {% if n.estado == 'enviado' %}<span class="badge b-green">OK</span>
+        {% elif n.estado == 'error' %}<span class="badge b-red">Error</span>
+        {% else %}<span class="badge b-gray">{{ n.estado }}</span>{% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;">Sin notificaciones aun</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const labels = {{ labels|safe }};
+const datos  = {{ datos|safe }};
+new Chart(document.getElementById('chartDia'), {
+  type:'bar',
+  data:{labels,datasets:[{label:'Correos enviados',data:datos,
+    backgroundColor:'rgba(13,71,161,.7)',borderRadius:5}]},
+  options:{responsive:true,plugins:{legend:{display:false}},
+    scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
+});
+
+let intervalo = null;
+
+function lanzarProceso() {
+  fetch('/api/lanzar', {method:'POST'})
+    .then(r=>r.json()).then(d=>{
+      if(!d.ok) { alert(d.msg); return; }
+      document.getElementById('btn-lanzar').style.display='none';
+      document.getElementById('btn-detener').style.display='flex';
+      document.getElementById('proceso-panel').style.display='block';
+      document.getElementById('proc-log').innerHTML='';
+      intervalo = setInterval(actualizarProgreso, 1500);
+    });
+}
+
+function detenerProceso() {
+  fetch('/api/detener', {method:'POST'}).then(()=>clearInterval(intervalo));
+}
+
+function actualizarProgreso() {
+  fetch('/api/progreso').then(r=>r.json()).then(d=>{
+    document.getElementById('proc-msg').textContent = d.mensaje;
+    document.getElementById('proc-cnt').textContent = d.progreso + '/' + d.total;
+    const pct = d.total > 0 ? Math.round((d.progreso/d.total)*100) : 0;
+    document.getElementById('proc-bar').style.width = pct + '%';
+    document.getElementById('proc-env').textContent = d.enviados || 0;
+    document.getElementById('proc-err').textContent = d.errores || 0;
+    const logEl = document.getElementById('proc-log');
+    if(d.log && d.log.length) {
+      logEl.innerHTML = d.log.slice(-30).map(l=>`<div>${l}</div>`).join('');
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+    if(!d.corriendo) {
+      clearInterval(intervalo);
+      document.getElementById('btn-lanzar').style.display='flex';
+      document.getElementById('btn-detener').style.display='none';
+    }
+  });
+}
+</script>
+{% endblock %}

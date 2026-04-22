@@ -1,0 +1,128 @@
+{
+  "proyecto": "Agente Comercial Autonomo",
+  "fecha": "2026-04-10",
+  "version": "1.0",
+  "responsable": "Camila Mesa - camila@mi.com.co",
+
+  "infraestructura": {
+    "orquestador": "n8n",
+    "url_n8n": "https://n8n-production-16e7.up.railway.app",
+    "servidor": "Railway (Trial activo ~26 dias restantes)",
+    "base_de_datos": "PostgreSQL en Railway",
+    "ia": "Claude API - claude-sonnet-4-20250514",
+    "crm_email": "Freshdesk - miassist.freshdesk.com",
+    "datos": "Google Sheets"
+  },
+
+  "credenciales_n8n": {
+    "google_sheets": {
+      "tipo": "Google Service Account",
+      "email_cuenta_servicio": "agente-comercial@lofty-ivy-490719-b5.iam.gserviceaccount.com",
+      "estado": "ACTIVA"
+    },
+    "anthropic": {
+      "tipo": "Header Auth",
+      "header_name": "x-api-key",
+      "modelo": "claude-sonnet-4-20250514",
+      "saldo": "$5.00 USD (credito gratuito)",
+      "estado": "ACTIVA"
+    },
+    "freshdesk": {
+      "tipo": "Basic Auth",
+      "dominio": "miassist.freshdesk.com",
+      "group_id": 48000568178,
+      "estado": "ACTIVA"
+    },
+    "smtp_gmail": {
+      "tipo": "SMTP",
+      "host": "smtp.gmail.com",
+      "puerto": 587,
+      "estado": "BLOQUEADO - Railway bloquea conexiones SMTP de Gmail"
+    }
+  },
+
+  "google_sheet": {
+    "nombre": "Agente Comercial CRM",
+    "id": "1Axqe6Up1JNoUhVO8uOlBa7xoiTb3TwbaSUUFTK5kc5E",
+    "url": "https://docs.google.com/spreadsheets/d/1Axqe6Up1JNoUhVO8uOlBa7xoiTb3TwbaSUUFTK5kc5E/edit",
+    "hojas": {
+      "Contactos": {
+        "columnas": ["id","nombre","empresa","cargo","email","industria","tipo_contacto","etapa_pipeline","ultimo_contacto","num_emails_enviados","num_sin_respuesta","ultimo_tema","notas","canal_preferido","estado","valor_historico"]
+      },
+      "Log_Actividad": {
+        "descripcion": "Se llena automaticamente por el agente tras cada envio"
+      }
+    }
+  },
+
+  "flujo_n8n": {
+    "nombre": "Agente Comercial Autonomo",
+    "trigger": "Cron: 0 8 * * 1-5 (lunes a viernes 8:00 AM)",
+    "nodos": [
+      { "nombre": "Trigger Diario (Lun-Vie 8AM)", "tipo": "Schedule Trigger", "estado": "OK", "config": "Cron: 0 8 * * 1-5" },
+      { "nombre": "Inicializar Ciclo", "tipo": "Code (JavaScript)", "estado": "OK", "config": "Prepara variables fecha_hoy, ciclo_id, contadores" },
+      { "nombre": "Leer Contactos (Google Sheets)", "tipo": "Google Sheets", "estado": "OK", "config": "Sheet ID hardcodeado, hoja: Contactos" },
+      { "nombre": "Filtrar y Validar Contactos", "tipo": "Code (JavaScript)", "estado": "OK", "config": "Excluye opt-outs, pausados, mas de 5 emails sin respuesta" },
+      { "nombre": "Dividir por Contacto", "tipo": "Split Out", "estado": "OK", "config": "Fields: a_procesar, Include: All Other Fields" },
+      { "nombre": "Clasificar con Claude IA", "tipo": "HTTP Request", "estado": "OK", "config": "POST https://api.anthropic.com/v1/messages, Header Auth" },
+      { "nombre": "Parsear Clasificacion", "tipo": "Code (JavaScript)", "estado": "OK", "config": "const respuestaApi = $input.first().json.content; const contacto = $input.first().json;" },
+      { "nombre": "Redactar Email con Claude", "tipo": "HTTP Request", "estado": "OK", "config": "POST https://api.anthropic.com/v1/messages, Header Auth" },
+      { "nombre": "Parsear Email Generado", "tipo": "Code (JavaScript)", "estado": "OK", "config": "Limpia backticks de Claude con regex: texto.replace(/^```json\\s*/i, '').replace(/```\\s*$/i, '')" },
+      { "nombre": "Enrutar por Canal", "tipo": "Switch", "estado": "OK", "config": "Condicion: $json.canal_preferido == freshdesk" },
+      {
+        "nombre": "HTTP Request (Freshdesk - Crear Ticket)",
+        "tipo": "HTTP Request",
+        "estado": "OK",
+        "config": {
+          "method": "POST",
+          "url": "https://miassist.freshdesk.com/api/v2/tickets",
+          "auth": "Basic Auth (Freshdesk API Key)",
+          "body": "{{ JSON.stringify({ subject: $json.asunto, description: $json.cuerpo_html, email: $json.email || 'camila@mi.com.co', name: $json.nombre || 'Camila Mesa', source: 2, status: 2, priority: 1, type: 'Informaci\\u00f3n', group_id: 48000568178, custom_fields: { cf_dominio: $json.empresa || 'MI.COM.CO' }, tags: ['agente_comercial'] }) }}"
+        }
+      },
+      {
+        "nombre": "HTTP Request1 (Freshdesk - Enviar Reply)",
+        "tipo": "HTTP Request",
+        "estado": "OK",
+        "config": {
+          "method": "POST",
+          "url": "https://miassist.freshdesk.com/api/v2/tickets/{{ $json.id }}/reply",
+          "auth": "Basic Auth (Freshdesk API Key)",
+          "body": "{{ JSON.stringify({ body: $input.first().json.description }) }}"
+        }
+      },
+      { "nombre": "Registrar en Log (Sheets)", "tipo": "Google Sheets", "estado": "OK", "config": "Append row en hoja Log_Actividad" },
+      { "nombre": "Actualizar Contacto (Sheets)", "tipo": "Google Sheets", "estado": "OK", "config": "Update row en hoja Contactos" },
+      { "nombre": "Generar Reporte con IA", "tipo": "HTTP Request", "estado": "OK", "config": "POST https://api.anthropic.com/v1/messages, Header Auth" },
+      { "nombre": "Enviar Reporte por Email", "tipo": "Send Email", "estado": "PENDIENTE", "config": "SMTP Gmail bloqueado desde Railway. Requiere Brevo u otro proveedor SMTP" }
+    ]
+  },
+
+  "problema_actual": {
+    "descripcion": "Emails duplicados al contacto cuando el agente actua",
+    "detalle": "Al crear el ticket en Freshdesk (HTTP Request 1) y luego enviar el reply (HTTP Request 2), el contacto recibe DOS emails en vez de uno.",
+    "email_correcto": "El reply (HTTP Request 2) con el contenido de Claude llega correctamente",
+    "email_duplicado": "Un email adicional llega con contenido generico de Freshdesk",
+    "lo_que_se_intento": [
+      "Desactivar notificacion 'Nuevo ticket creado - Al solicitante' en Admin > Email Notifications",
+      "Agregar condicion en automatizacion #19 '[S.A.C] Creacion de ticket' para excluir tag agente_comercial"
+    ],
+    "pregunta_para_revisor": "En Freshdesk, que otra configuracion puede estar enviando un email automatico al solicitante cuando se crea un ticket via API con el tag agente_comercial?"
+  },
+
+  "proximos_pasos": [
+    { "orden": 1, "tarea": "Resolver emails duplicados en Freshdesk", "prioridad": "ALTA" },
+    { "orden": 2, "tarea": "Configurar envio del reporte diario (Brevo o alternativa a Gmail SMTP)", "prioridad": "MEDIA" },
+    { "orden": 3, "tarea": "Agregar contactos reales al Google Sheet para prueba completa", "prioridad": "MEDIA" },
+    { "orden": 4, "tarea": "Activar trigger automatico en n8n (Toggle Active)", "prioridad": "MEDIA" },
+    { "orden": 5, "tarea": "Configurar pago de Railway antes de que termine el trial", "prioridad": "ALTA" }
+  ],
+
+  "costos_mensuales": {
+    "railway": "$5 USD/mes (servidor n8n)",
+    "claude_api": "$5-8 USD/mes (uso estimado para 50-100 contactos diarios)",
+    "freshdesk": "Ya contratado por la empresa",
+    "google_sheets": "Gratuito",
+    "total_estimado": "$10-13 USD/mes"
+  }
+}

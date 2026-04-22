@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Panel MI.COM.CO{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--azul:#0d47a1;--azul2:#1565c0;--azul3:#1976d2;--naranja:#FF6D00;--rojo:#b71c1c;--verde:#2e7d32;--bg:#f0f4f8;--surf:#fff;--brd:#e3eaf4;--txt:#1a1a2e;--muted:#6b7a99;--sw:240px;--r:10px;--sh:0 4px 20px rgba(0,0,0,.08);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--txt);display:flex;min-height:100vh;}
+.sb{width:var(--sw);background:var(--azul);min-height:100vh;position:fixed;left:0;top:0;z-index:100;display:flex;flex-direction:column;}
+.sb-logo{padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.12);}
+.sb-logo-box{display:flex;align-items:center;gap:10px;}
+.sb-icon{width:38px;height:38px;background:var(--naranja);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;}
+.sb-brand{color:#fff;font-size:14px;font-weight:800;}
+.sb-sub{color:rgba(255,255,255,.55);font-size:10px;}
+.sb-nav{flex:1;padding:12px 0;}
+.sb-sec{padding:8px 18px 3px;font-size:10px;font-weight:700;color:rgba(255,255,255,.38);letter-spacing:1.2px;text-transform:uppercase;}
+.sb-lnk{display:flex;align-items:center;gap:9px;padding:9px 20px;color:rgba(255,255,255,.72);text-decoration:none;font-size:13px;font-weight:500;transition:.15s;}
+.sb-lnk:hover,.sb-lnk.on{background:rgba(255,255,255,.12);color:#fff;}
+.sb-lnk .ic{font-size:16px;width:20px;text-align:center;}
+.sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.12);}
+.sb-user{display:flex;align-items:center;gap:9px;}
+.sb-av{width:32px;height:32px;background:var(--naranja);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;}
+.sb-uname{color:#fff;font-size:12px;font-weight:600;}
+.sb-urol{color:rgba(255,255,255,.5);font-size:10px;}
+.sb-out{display:block;margin-top:8px;text-align:center;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);text-decoration:none;padding:5px;border-radius:5px;font-size:12px;}
+.sb-out:hover{background:rgba(255,255,255,.18);color:#fff;}
+.main{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;}
+.topbar{background:var(--surf);border-bottom:1px solid var(--brd);padding:13px 26px;display:flex;align-items:center;justify-content:space-between;}
+.topbar-ttl{font-size:17px;font-weight:700;}
+.topbar-r{font-size:12px;color:var(--muted);}
+.content{padding:22px 26px;flex:1;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:22px;}
+.card{background:var(--surf);border-radius:var(--r);box-shadow:var(--sh);padding:18px 20px;}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
+.card-ic{font-size:26px;}
+.card-val{font-size:28px;font-weight:800;}
+.card-lbl{font-size:12px;color:var(--muted);margin-top:3px;}
+.c-blue .card-val{color:var(--azul);}
+.c-orange .card-val{color:var(--naranja);}
+.c-red .card-val{color:var(--rojo);}
+.c-green .card-val{color:var(--verde);}
+.panel{background:var(--surf);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;}
+.panel-hdr{padding:14px 18px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;}
+.panel-hdr h3{font-size:14px;font-weight:700;}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl thead th{background:#f7f9fc;padding:9px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--brd);}
+.tbl tbody td{padding:10px 14px;border-bottom:1px solid #f5f7fb;}
+.tbl tbody tr:hover{background:#fafbfd;}
+.tbl tbody tr:last-child td{border-bottom:none;}
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;}
+.b-blue{background:#e3f2fd;color:#1565c0;}
+.b-orange{background:#fff3e0;color:#e65100;}
+.b-red{background:#ffebee;color:#c62828;}
+.b-green{background:#e8f5e9;color:#2e7d32;}
+.b-gray{background:#f5f5f5;color:#666;}
+.b-purple{background:#f3e5f5;color:#7b1fa2;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;border:none;cursor:pointer;text-decoration:none;font-family:inherit;transition:.15s;}
+.btn-primary{background:var(--azul);color:#fff;}
+.btn-primary:hover{background:var(--azul2);}
+.btn-orange{background:var(--naranja);color:#fff;}
+.btn-orange:hover{background:#e65100;}
+.btn-green{background:var(--verde);color:#fff;}
+.btn-danger{background:var(--rojo);color:#fff;}
+.btn-outline{background:transparent;border:1.5px solid var(--brd);color:var(--txt);}
+.btn-outline:hover{background:var(--bg);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.alert{padding:11px 14px;border-radius:7px;font-size:13px;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.a-ok{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;}
+.a-err{background:#ffebee;color:#c62828;border:1px solid #ef9a9a;}
+.a-inf{background:#e3f2fd;color:#1565c0;border:1px solid #90caf9;}
+.a-warn{background:#fff8e1;color:#f57f17;border:1px solid #ffe082;}
+.prog-bg{background:#e3eaf4;border-radius:99px;height:7px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--azul),var(--naranja));transition:width .4s;}
+.form-g{margin-bottom:15px;}
+.form-g label{display:block;font-size:13px;font-weight:600;margin-bottom:5px;}
+.form-g input,.form-g select{width:100%;padding:9px 12px;border:1.5px solid var(--brd);border-radius:7px;font-size:13px;font-family:inherit;transition:.15s;}
+.form-g input:focus,.form-g select:focus{outline:none;border-color:var(--azul3);box-shadow:0 0 0 3px rgba(25,118,210,.1);}
+.form-hint{font-size:11px;color:var(--muted);margin-top:3px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.pag{display:flex;gap:6px;align-items:center;padding:14px 18px;border-top:1px solid var(--brd);}
+.pag a,.pag span{padding:5px 11px;border-radius:5px;font-size:13px;text-decoration:none;border:1px solid var(--brd);color:var(--txt);}
+.pag a:hover{background:var(--azul);color:#fff;border-color:var(--azul);}
+.pag .cur{background:var(--azul);color:#fff;border-color:var(--azul);}
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+<aside class="sb">
+  <div class="sb-logo">
+    <div class="sb-logo-box">
+      <div class="sb-icon">MI</div>
+      <div><div class="sb-brand">MI.COM.CO</div><div class="sb-sub">Panel de Renovaciones</div></div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Principal</div>
+    <a href="{{ url_for('main.dashboard') }}"      class="sb-lnk {% if request.endpoint=='main.dashboard' %}on{% endif %}"><span class="ic">📊</span> Dashboard</a>
+    <a href="{{ url_for('main.notificaciones') }}" class="sb-lnk {% if request.endpoint=='main.notificaciones' %}on{% endif %}"><span class="ic">📬</span> Notificaciones</a>
+    <a href="{{ url_for('main.cargar_excel') }}"   class="sb-lnk {% if request.endpoint=='main.cargar_excel' %}on{% endif %}"><span class="ic">📁</span> Cargar Excel</a>
+    <div class="sb-sec">Reportes</div>
+    <a href="{{ url_for('reports.reportes') }}?rango=semanal"   class="sb-lnk {% if request.endpoint=='reports.reportes' and request.args.get('rango','semanal')=='semanal' %}on{% endif %}"><span class="ic">📅</span> Semanal</a>
+    <a href="{{ url_for('reports.reportes') }}?rango=quincenal" class="sb-lnk {% if request.args.get('rango')=='quincenal' %}on{% endif %}"><span class="ic">📆</span> Quincenal</a>
+    <a href="{{ url_for('reports.reportes') }}?rango=mensual"   class="sb-lnk {% if request.args.get('rango')=='mensual' %}on{% endif %}"><span class="ic">🗓️</span> Mensual</a>
+    <div class="sb-sec">Sistema</div>
+    <a href="{{ url_for('main.logs') }}"           class="sb-lnk {% if request.endpoint=='main.logs' %}on{% endif %}"><span class="ic">📋</span> Logs</a>
+    <a href="{{ url_for('main.configuracion') }}"  class="sb-lnk {% if request.endpoint=='main.configuracion' %}on{% endif %}"><span class="ic">⚙️</span> Configuracion</a>
+    <a href="{{ url_for('auth.cambiar_password') }}" class="sb-lnk"><span class="ic">🔑</span> Cambiar Clave</a>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-user">
+      <div class="sb-av">{{ current_user.username[0].upper() }}</div>
+      <div><div class="sb-uname">{{ current_user.nombre or current_user.username }}</div><div class="sb-urol">{{ current_user.rol }}</div></div>
+    </div>
+    <a href="{{ url_for('auth.logout') }}" class="sb-out">Cerrar sesion</a>
+  </div>
+</aside>
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-ttl">{% block page_title %}Panel{% endblock %}</div>
+    <div class="topbar-r">{{ now.strftime('%d/%m/%Y %H:%M') if now else '' }}</div>
+  </div>
+  <div class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert {{ 'a-ok' if cat=='success' else 'a-err' if cat=='error' else 'a-warn' if cat=='warning' else 'a-inf' }}">
+          {{ '✅' if cat=='success' else '❌' if cat=='error' else '⚠️' if cat=='warning' else 'ℹ️' }} {{ msg }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </div>
+</main>
+{% block scripts %}{% endblock %}
+</body></html>

@@ -219,3 +219,11 @@ docker-compose.override.yaml
 # -----------------------------------------------------------------------------
 config/auth.local.js
 config/*.local.js
+web/config/auth.local.js
+web/config/*.local.js
+
+# Backend Flask — archivo de entorno real (usar api/.env.example como plantilla)
+api/.env
+api/instance/
+api/uploads/
+api/logs/
