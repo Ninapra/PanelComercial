@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from flask_cors import CORS
 from datetime import timedelta
 import os
 
@@ -51,6 +52,13 @@ def create_app():
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Inicia sesion para continuar.'
+
+    # CORS: habilita llamadas cross-origin desde el frontend (web/ servido
+    # en puerto distinto). Los origenes permitidos vienen del entorno para
+    # no hardcodear URLs de prod.
+    cors_origins = [o.strip() for o in os.environ.get('CORS_ORIGINS', '').split(',') if o.strip()]
+    if cors_origins:
+        CORS(app, resources={r"/api/*": {"origins": cors_origins}}, supports_credentials=True)
 
     from app.routes.auth    import auth_bp
     from app.routes.main    import main_bp
