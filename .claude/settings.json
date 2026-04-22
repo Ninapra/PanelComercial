@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .claude/hooks/pre_write_guard.py"
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/pre_write_guard.py\""
           }
         ]
       },
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python .claude/hooks/pre_bash_guard.py"
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/pre_bash_guard.py\""
           }
         ]
       }
