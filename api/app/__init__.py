@@ -34,13 +34,23 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     os.makedirs(app.instance_path, exist_ok=True)
 
+    # Cookie de sesion — configurable via env para soportar escenarios:
+    #   - Dev localhost HTTP (Chrome trata localhost como secure): None + Secure=True
+    #   - Same-origin simple: Lax + Secure=False
+    #   - Produccion HTTPS cross-subdomain: None + Secure=True
+    # Los defaults eligen None+Secure porque la arquitectura usual del panel
+    # es frontend (web/) y backend (api/) en origenes distintos.
+    cookie_samesite = os.environ.get('SESSION_COOKIE_SAMESITE', 'None')
+    cookie_secure = os.environ.get('SESSION_COOKIE_SECURE', 'true').lower() in ('1', 'true', 'yes', 'on')
+
     app.config.update(
         SECRET_KEY=_require_env('SECRET_KEY'),
         SQLALCHEMY_DATABASE_URI='sqlite:///' + os.path.join(app.instance_path, 'renovaciones.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         PERMANENT_SESSION_LIFETIME=timedelta(hours=8),
         SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SAMESITE='Lax',
+        SESSION_COOKIE_SAMESITE=cookie_samesite,
+        SESSION_COOKIE_SECURE=cookie_secure,
         MAX_CONTENT_LENGTH=16 * 1024 * 1024,
         UPLOAD_FOLDER=os.path.join(os.path.dirname(app.instance_path), 'uploads'),
         LOG_FOLDER=os.path.join(os.path.dirname(app.instance_path), 'logs'),
@@ -77,23 +87,64 @@ def create_app():
 
 
 def _seed_admin():
-    """Crea admin y config SMTP iniciales si la BD está vacía.
+    """Crea usuarios iniciales + config SMTP si la BD está vacía.
 
-    Todos los valores se leen de entorno — nunca hardcoded.
-    Si las vars no existen, el seed se omite con warning (permite levantar
-    la app en modo sin SMTP, por ejemplo en tests).
+    Todos los valores se leen de entorno — nunca hardcoded. Si una variable
+    crítica falta, ese usuario específico se omite (no rompe el arranque).
+
+    Variables soportadas:
+      - ADMIN_EMAIL / ADMIN_PASSWORD: admin único (obligatorio si es primer run)
+      - USERS_SEED_JSON: JSON opcional con lista de usuarios extra. Formato:
+          [
+            {"email":"paula@example.com","password":"...","nombre":"Paula","rol":"agente"},
+            ...
+          ]
+        Se usa para poblar los agentes iniciales (Paula/Camila/Nina/Gerencia)
+        sin tener que crearlos manualmente por la UI.
     """
+    import json as _json
     from app.models import User, ConfigSMTP
     from werkzeug.security import generate_password_hash
 
+    def _slug(email):
+        return (email or '').split('@', 1)[0].replace('.', '_') or 'user'
+
+    def _ensure_user(email, password, nombre, rol='operador'):
+        if not email or not password:
+            return
+        email_norm = email.strip().lower()
+        existing = User.query.filter_by(email=email_norm).first()
+        if existing:
+            return
+        db.session.add(User(
+            username=_slug(email_norm),
+            nombre=nombre or email_norm.split('@', 1)[0].title(),
+            email=email_norm,
+            rol=rol,
+            password_hash=generate_password_hash(password),
+        ))
+
     admin_email = os.environ.get('ADMIN_EMAIL')
     admin_password = os.environ.get('ADMIN_PASSWORD')
-    if not User.query.first() and admin_email and admin_password:
-        db.session.add(User(
-            username='admin', nombre='Administrador',
-            email=admin_email, rol='admin',
-            password_hash=generate_password_hash(admin_password),
-        ))
+    admin_name = os.environ.get('ADMIN_NAME', 'Administrador')
+    _ensure_user(admin_email, admin_password, admin_name, 'admin')
+
+    users_raw = os.environ.get('USERS_SEED_JSON', '').strip()
+    if users_raw:
+        try:
+            extra = _json.loads(users_raw)
+            if isinstance(extra, list):
+                for u in extra:
+                    if isinstance(u, dict):
+                        _ensure_user(
+                            u.get('email'),
+                            u.get('password'),
+                            u.get('nombre'),
+                            u.get('rol', 'operador'),
+                        )
+        except _json.JSONDecodeError:
+            # En dev ignoramos silenciosamente; en prod conviene validar.
+            pass
 
     smtp_user = os.environ.get('IMAP_USER')
     smtp_password = os.environ.get('IMAP_PASSWORD')

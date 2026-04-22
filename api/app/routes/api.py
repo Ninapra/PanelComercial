@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request, current_app
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, login_user, logout_user
+from werkzeug.security import check_password_hash
 from datetime import datetime, date, timedelta
 from sqlalchemy import func
-from app.models import Notificacion, ArchivoExcel, LogSistema, ConfigSMTP
+from app.models import User, Notificacion, ArchivoExcel, LogSistema, ConfigSMTP
 from app import db
 import threading, json, smtplib, ssl
 
@@ -19,6 +20,52 @@ def health():
         'service': 'panel-comercial-api',
         'time': datetime.utcnow().isoformat() + 'Z',
     })
+
+
+# ── Auth JSON (fuente unica de autenticacion para el panel master) ─────────
+# El panel web (web/index.html) llama a /api/auth/login con email+password.
+# Flask-Login crea la sesion (cookie SameSite=Lax en dominio :5000) y el
+# iframe del "Notificador" hereda esa sesion sin pedir re-login.
+
+def _user_payload(u):
+    return {
+        'email':  u.email,
+        'nombre': u.nombre,
+        'rol':    u.rol,
+        'inicial': (u.nombre or u.email or '?')[:1].upper(),
+    }
+
+
+@api_bp.route('/auth/login', methods=['POST', 'OPTIONS'])
+def auth_login():
+    if request.method == 'OPTIONS':
+        return ('', 204)
+    data = request.get_json(silent=True) or {}
+    email = (data.get('email') or '').strip().lower()
+    password = data.get('password') or ''
+    if not email or not password:
+        return jsonify({'ok': False, 'error': 'missing_credentials'}), 400
+    user = User.query.filter(func.lower(User.email) == email).first()
+    if not user or not user.activo or not check_password_hash(user.password_hash, password):
+        return jsonify({'ok': False, 'error': 'invalid_credentials'}), 401
+    login_user(user, remember=True)
+    user.ultimo_login = datetime.utcnow()
+    db.session.commit()
+    return jsonify({'ok': True, 'user': _user_payload(user)})
+
+
+@api_bp.route('/auth/me')
+def auth_me():
+    if not current_user.is_authenticated:
+        return jsonify({'ok': False, 'error': 'not_authenticated'}), 401
+    return jsonify({'ok': True, 'user': _user_payload(current_user)})
+
+
+@api_bp.route('/auth/logout', methods=['POST'])
+def auth_logout():
+    if current_user.is_authenticated:
+        logout_user()
+    return jsonify({'ok': True})
 
 
 estado_proceso = {
