@@ -8,6 +8,19 @@ import threading, json, smtplib, ssl
 
 api_bp = Blueprint('api', __name__)
 
+
+# ── Health / conectividad ──────────────────────────────────────────────────
+# Endpoint publico usado por el frontend para verificar que el backend esta
+# arriba antes de habilitar features que dependen del API.
+@api_bp.route('/health')
+def health():
+    return jsonify({
+        'status': 'ok',
+        'service': 'panel-comercial-api',
+        'time': datetime.utcnow().isoformat() + 'Z',
+    })
+
+
 estado_proceso = {
     'corriendo': False, 'progreso': 0, 'total': 0,
     'mensaje': 'Esperando...', 'log': [], 'inicio': None,
