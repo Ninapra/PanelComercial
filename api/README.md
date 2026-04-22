@@ -46,8 +46,12 @@ micomco_panel/
 
 ## Credenciales iniciales
 
-- **Usuario:** `admin`
-- **Contraseña:** `Admin2024!` ← cambiar al primer ingreso
+El admin se crea en el primer arranque leyendo `ADMIN_EMAIL` y
+`ADMIN_PASSWORD` desde `api/.env`. Si esas variables no están definidas,
+el seed se omite y se debe crear el admin manualmente por CLI.
+
+Ver `api/.env.example` para la plantilla. **Nunca** hardcodees estos
+valores: el hook de seguridad bloqueará el commit.
 
 ## Configuración SMTP/IMAP requerida
 

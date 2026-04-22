@@ -84,10 +84,11 @@ echo.
 echo   El panel se abrira en tu navegador en:
 echo   http://localhost:5000
 echo.
-echo   Usuario: admin
-echo   Contrasena: Admin2024!
+echo   Credenciales iniciales: las definidas en api\.env
+echo   (variables ADMIN_EMAIL y ADMIN_PASSWORD).
 echo.
-echo   IMPORTANTE: Cambia la contrasena despues de ingresar.
+echo   Copia api\.env.example a api\.env antes de iniciar,
+echo   completando los placeholders con valores reales.
 echo.
 echo   Presiona cualquier tecla para iniciar el panel...
 pause >nul
