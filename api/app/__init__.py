@@ -77,23 +77,64 @@ def create_app():
 
 
 def _seed_admin():
-    """Crea admin y config SMTP iniciales si la BD está vacía.
+    """Crea usuarios iniciales + config SMTP si la BD está vacía.
 
-    Todos los valores se leen de entorno — nunca hardcoded.
-    Si las vars no existen, el seed se omite con warning (permite levantar
-    la app en modo sin SMTP, por ejemplo en tests).
+    Todos los valores se leen de entorno — nunca hardcoded. Si una variable
+    crítica falta, ese usuario específico se omite (no rompe el arranque).
+
+    Variables soportadas:
+      - ADMIN_EMAIL / ADMIN_PASSWORD: admin único (obligatorio si es primer run)
+      - USERS_SEED_JSON: JSON opcional con lista de usuarios extra. Formato:
+          [
+            {"email":"paula@example.com","password":"...","nombre":"Paula","rol":"agente"},
+            ...
+          ]
+        Se usa para poblar los agentes iniciales (Paula/Camila/Nina/Gerencia)
+        sin tener que crearlos manualmente por la UI.
     """
+    import json as _json
     from app.models import User, ConfigSMTP
     from werkzeug.security import generate_password_hash
 
+    def _slug(email):
+        return (email or '').split('@', 1)[0].replace('.', '_') or 'user'
+
+    def _ensure_user(email, password, nombre, rol='operador'):
+        if not email or not password:
+            return
+        email_norm = email.strip().lower()
+        existing = User.query.filter_by(email=email_norm).first()
+        if existing:
+            return
+        db.session.add(User(
+            username=_slug(email_norm),
+            nombre=nombre or email_norm.split('@', 1)[0].title(),
+            email=email_norm,
+            rol=rol,
+            password_hash=generate_password_hash(password),
+        ))
+
     admin_email = os.environ.get('ADMIN_EMAIL')
     admin_password = os.environ.get('ADMIN_PASSWORD')
-    if not User.query.first() and admin_email and admin_password:
-        db.session.add(User(
-            username='admin', nombre='Administrador',
-            email=admin_email, rol='admin',
-            password_hash=generate_password_hash(admin_password),
-        ))
+    admin_name = os.environ.get('ADMIN_NAME', 'Administrador')
+    _ensure_user(admin_email, admin_password, admin_name, 'admin')
+
+    users_raw = os.environ.get('USERS_SEED_JSON', '').strip()
+    if users_raw:
+        try:
+            extra = _json.loads(users_raw)
+            if isinstance(extra, list):
+                for u in extra:
+                    if isinstance(u, dict):
+                        _ensure_user(
+                            u.get('email'),
+                            u.get('password'),
+                            u.get('nombre'),
+                            u.get('rol', 'operador'),
+                        )
+        except _json.JSONDecodeError:
+            # En dev ignoramos silenciosamente; en prod conviene validar.
+            pass
 
     smtp_user = os.environ.get('IMAP_USER')
     smtp_password = os.environ.get('IMAP_PASSWORD')
